@@ -6,8 +6,15 @@ import numpy as np
 import pandas as pd
 from Bio import SeqIO
 
-from embeddings import setup_esm, fetch_esm_embeddings_batched
+from embeddings import fetch_esm_embeddings_batched
 from helpers import pad_variable_length_sequences
+
+def sub_seq(seq, position, mut):
+        """
+        Add a substitution to a sequence
+        """
+        mut = mut if not mut == "stop" else "*"
+        return "".join([aa if not i == position else mut for i, aa in enumerate(seq)])
 
 class MAVELoader():
     """MAVE Dataset Loader"""
@@ -21,26 +28,21 @@ class MAVELoader():
         df = mavedb[
             mavedb.identifier_uniprot.isin(sequences.keys())
             ].filter(regex="identifier_uniprot|position|_norm_score$")
+        df = df.loc[[len(sequences[i]) <= 2048 for i in df.identifier_uniprot]]
 
         score_df = pd.melt(df, id_vars=["identifier_uniprot", "position"], var_name="mut", value_name="norm_score")
+        score_df = score_df.dropna(subset="norm_score")
         score_df.mut = [i.split("_")[0] for i in score_df.mut]
 
-        score_df["seq"] = [self.sub_seq(sequences[u], p, m) for u, p, m in zip(score_df.identifier_uniprot, score_df.position, score_df.mut)]
+        score_df["seq"] = [sub_seq(sequences[u], p, m) for u, p, m in zip(score_df.identifier_uniprot, score_df.position, score_df.mut)]
 
-        data = score_df.merge(df, on = ["identifier_uniprot", "position"], how = "left").dropna(subset="mut")
+        data = score_df.merge(df, on = ["identifier_uniprot", "position"], how = "left")
 
         self.score = data.norm_score.to_numpy()
         self.position = data.position.to_numpy()
         self.seq = pad_variable_length_sequences(data.seq.to_numpy())
         self.score_matrix = data.filter(regex="_norm_score$").to_numpy()
-        self.score_matrix = np.nan_to_num(self.score_matrix, 0, copy=False)
-
-    def sub_seq(seq, position, mut):
-        """
-        Add a substitution to a sequence
-        """
-        mut = mut if not mut == "stop" else "*"
-        return "".join([aa if not i == position else mut for i, aa in enumerate(seq)])
+        self.score_matrix = np.nan_to_num(self.score_matrix, 0)
 
     def __len__(self):
         return len(self.score)
@@ -57,19 +59,8 @@ class model:
     pass
 
 def main():
-    pass
-
-# def parse_args(arg_list=None):
-#     """
-#     Construct argument parser
-#     """
-#     parser = argparse.ArgumentParser(description=__doc__,
-#                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-#     parser.add_argument("fastas", nargs="+", metavar="F",
-#                         help="Files to count sequences from")
-
-#     return parser.parse_args(arg_list)
+    data = MAVELoader()
+    print(data)
 
 if __name__ == "__main__":
     main()
