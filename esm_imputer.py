@@ -10,6 +10,7 @@ import pandas as pd
 from Bio import SeqIO
 
 from embeddings import setup_esm, fetch_esm_embeddings_batched
+from helpers import pad_variable_length_sequences
 
 class MAVELoader():
     """MAVE Dataset Loader"""
