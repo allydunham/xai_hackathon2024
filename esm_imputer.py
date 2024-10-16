@@ -7,8 +7,9 @@ import sys
 
 import numpy as np
 import pandas as pd
-
 from Bio import SeqIO
+
+from embeddings import setup_esm, fetch_esm_embeddings_batched
 
 class MAVELoader():
     """MAVE Dataset Loader"""
