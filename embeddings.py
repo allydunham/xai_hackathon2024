@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 import esm
 
 def setup_esm():
-    model, alphabet = esm.pretrained.pretrained.esm2_t12_35M_UR50D()
+    model, alphabet = esm.pretrained.esm2_t12_35M_UR50D()
     batch_converter = alphabet.get_batch_converter()
     model = model.to("mps")
     model.eval()

@@ -8,8 +8,7 @@ class ESMImputer(nn.Module):
     """
 
     def __init__(self, input_size = 320, hidden_layers = [128, 64, 32, 16], dropout_layers=[0.0, 0.0, 0.0, 0.0]):
-
-        super(FitnessFindingFromPLMEmbeddings, self).__init__()
+        super(ESMImputer, self).__init__()
         layers = []
         in_size = input_size
 
@@ -19,7 +18,7 @@ class ESMImputer(nn.Module):
             layers.append(nn.ReLU())                                # Activation function (ReLU)
             if index < len(dropout_layers) and dropout_layers[index] > 0:
                 layers.append(nn.Dropout(p = dropout_layers[index]))    # Dropout layer
-                
+
             in_size = hidden_size
 
         # Output layer for regression (single output for fitness value)
@@ -31,9 +30,8 @@ class ESMImputer(nn.Module):
 
         return self.network(x)
 
-def set_up_model(input_size: int, hidden_layers: list, dropout_layers: list):
-
-    model = FitnessFindingFromPLMEmbeddings(input_size, hidden_layers, dropout_layers)
+def setup_model(input_size: int, hidden_layers: list, dropout_layers: list):
+    model = ESMImputer(input_size, hidden_layers, dropout_layers)
     criterion = nn.MSELoss()
     optimiser = torch.optim.Adam(model.parameters(), lr = 0.001)
 
