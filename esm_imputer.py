@@ -8,6 +8,8 @@ import sys
 import numpy as np
 import pandas as pd
 
+from embeddings import setup_esm, fetch_esm_embeddings_batched
+
 def data_loader():
     pass
 
