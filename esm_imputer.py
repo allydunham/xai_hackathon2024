@@ -12,6 +12,7 @@ from torch.utils.data import Dataset, DataLoader, random_split
 
 from embeddings import fetch_esm_embeddings_batched, setup_esm
 from helpers import pad_variable_length_sequences
+from downstream import ESMImputer, setup_model
 
 AMINO_ACIDS = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L',
                'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y',
