@@ -2,9 +2,6 @@
 """
 Basic denoising diffusion model for imputing missing MAVE data
 """
-import argparse
-import sys
-
 import numpy as np
 import pandas as pd
 from Bio import SeqIO
@@ -34,7 +31,7 @@ class MAVELoader():
 
         self.score = data.norm_score.to_numpy()
         self.position = data.position.to_numpy()
-        self.seq = data.seq.to_numpy()
+        self.seq = pad_variable_length_sequences(data.seq.to_numpy())
         self.score_matrix = data.filter(regex="_norm_score$").to_numpy()
         self.score_matrix = np.nan_to_num(self.score_matrix, 0, copy=False)
 
