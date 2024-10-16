@@ -8,8 +8,24 @@ import sys
 import numpy as np
 import pandas as pd
 
-def data_loader():
-    pass
+from Bio import SeqIO
+
+class MAVELoader():
+    """MAVE Dataset Loader"""
+    def __init__(self):
+        self.sequences = {
+            i.id.split("|")[1]: str(i.seq) for i in SeqIO.parse("mavedb_uniprot.fa", "fasta")
+        }
+
+        self.mavedb = pd.read_csv("mavedb_singles_wide.tsv", sep="\t")
+
+        df = self.mavedb[self.mavedb.identifier_uniprot.isin(self.sequences.keys())]
+
+    def __len__(self):
+        pass
+
+    def __getitem__(self, index):
+        pass
 
 class model:
     pass
