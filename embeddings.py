@@ -2,16 +2,15 @@ import torch
 from torch.utils.data import DataLoader
 import esm
 
-def setup_esm():
+def setup_esm(device="mps"):
     model, alphabet = esm.pretrained.esm2_t12_35M_UR50D()
     batch_converter = alphabet.get_batch_converter()
-    model = model.to("mps")
+    model = model.to(device)
     model.eval()
     embedding_size = model.embed_dim
     n_layers = len(model.layers)
 
     return model, alphabet, batch_converter, embedding_size, n_layers
-
 
 def fetch_esm_embeddings_batched(
     dataset,
@@ -85,7 +84,7 @@ def fetch_esm_embeddings_batched(
             embedding = token_representations[i, token_idx].float().to(device)
 
             # Store the embedding
-            dataset.sequence_representations[batch_idx * batch_size + i] = embedding
+            dataset.esm[batch_idx * batch_size + i] = embedding.cpu()
 
         if device in ['cuda', 'mps']:
             torch.cuda.empty_cache()

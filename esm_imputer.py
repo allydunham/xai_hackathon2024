@@ -55,7 +55,7 @@ class MAVELoader(Dataset):
         self.score_matrix = data.filter(regex="_norm_score$").to_numpy()
         self.score_matrix = np.nan_to_num(self.score_matrix, 0)
         self.score_matrix[mut_inds] = 0
-        self.esm = np.zeros((len(self.score), 2))
+        self.esm = np.zeros((len(self.score), 480))
 
     def __len__(self):
         return len(self.score)
@@ -70,7 +70,7 @@ class MAVELoader(Dataset):
             "concat": np.concat((self.esm[index,], self.score_matrix[index,]))
         }
 
-def train(model, loss_fn, optimizer, train_loader, val_loader, epochs=1, path="models/"):
+def train(model, loss_fn, optimizer, train_loader, val_loader, epochs=1, path="models/", device="mps"):
     best_vloss = float('inf')
 
     for i in range(epochs):
@@ -79,8 +79,8 @@ def train(model, loss_fn, optimizer, train_loader, val_loader, epochs=1, path="m
         running_loss = 0.
 
         for j, data in enumerate(train_loader):
-            inputs = data["concat"].float().to("mps")
-            outputs = data["score"].float().to("mps")
+            inputs = data["concat"].float().to(device)
+            outputs = data["score"].float().to(device)
             optimizer.zero_grad()
             predicted = model(inputs)
             loss = loss_fn(predicted, outputs)
@@ -110,15 +110,14 @@ def train(model, loss_fn, optimizer, train_loader, val_loader, epochs=1, path="m
 
 def main():
     print("Loading ESM2-35M", file=sys.stderr)
-    esm, alphabet, batch_converter, embedding_size, n_layers = setup_esm()
+    esm, alphabet, batch_converter, embedding_size, n_layers = setup_esm(device="cuda")
 
-    print("Importing MAVE Data", file=sys.stderr)
     if not os.path.isfile("cached.dataset"):
         print("Importing MAVE Data", file=sys.stderr)
         data = MAVELoader()
 
         print("Generating ESM Representations", file=sys.stderr)
-        fetch_esm_embeddings_batched(data, esm, alphabet, batch_converter, n_layers, batch_size=10)
+        fetch_esm_embeddings_batched(data, esm, alphabet, batch_converter, n_layers, batch_size=10, device="cuda")
 
         print("Caching Data", file=sys.stderr)
         torch.save(data, "cached.dataset")
@@ -126,9 +125,6 @@ def main():
     else:
         print("Loading Cached Data", file=sys.stderr)
         data = torch.load("cached.dataset")
-
-    print("Generating ESM Representations", file=sys.stderr)
-    fetch_esm_embeddings_batched(data, esm, alphabet, batch_converter, n_layers, batch_size=10)
 
     print("Loading Model", file=sys.stderr)
     model, criterion, optimiser = setup_model(embedding_size + 21, [64, 32], [0.0, 0.0])
@@ -139,7 +135,7 @@ def main():
     val_loader = DataLoader(val_data, batch_size=10, shuffle=True)
 
     print("Training Model", file=sys.stderr)
-    train(model, criterion, optimiser, train_loader, val_loader, 100, path = "models/nn")
+    train(model, criterion, optimiser, train_loader, val_loader, 100, path = "models/nn", device="cuda")
 
     print("Saving Model", file=sys.stderr)
     torch.save(model.state_dict(), "models/countries/model_final")
