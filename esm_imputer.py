@@ -13,6 +13,10 @@ from torch.utils.data import Dataset, DataLoader, random_split
 from embeddings import fetch_esm_embeddings_batched, setup_esm
 from helpers import pad_variable_length_sequences
 
+AMINO_ACIDS = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L',
+               'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y',
+               'stop']
+
 def sub_seq(seq, position, mut):
         """
         Add a substitution to a sequence
@@ -41,6 +45,12 @@ class MAVELoader(Dataset):
         score_df["seq"] = [sub_seq(sequences[u], p, m) for u, p, m in zip(score_df.identifier_uniprot, score_df.position, score_df.mut)]
 
         data = score_df.merge(df, on = ["identifier_uniprot", "position"], how = "left")
+
+        def set_mutated_zero(row):
+            row[f"{row['mut']}_norm_score"] = 0
+            return row
+
+        data = data.apply(set_mutated_zero, axis=1)
 
         self.score = data.norm_score.to_numpy()
         self.position = data.position.to_numpy()
