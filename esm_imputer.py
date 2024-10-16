@@ -122,7 +122,7 @@ def main():
 
         print("Caching Data", file=sys.stderr)
         torch.save(data, "cached.dataset")
-g
+
     else:
         print("Loading Cached Data", file=sys.stderr)
         data = torch.load("cached.dataset")
